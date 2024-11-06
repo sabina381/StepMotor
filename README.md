@@ -1,6 +1,24 @@
 ## How to use
-	1.	Clone the repository to your desktop.
-	2.	Move the cloned folder to `/Documents/Arduino/libraries`.
+1.	Clone the repository to your desktop.
+2.	Move the cloned folder to `/Documents/Arduino/libraries`.
+
+```{cpp}
+#include <StepMotor.h>
+#define STEP4LAP 4095
+
+StepMotor stepper_1(STEP4LAP, 3, 4, 5, 6);
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+    stepper_1.step(STEP4LAP);
+    delay(2000);
+    stepper_1.step(STEP4LAP);
+    delay(2000);
+}
+```
 
 ## Target stepmotor 
 name : 28BYJ-48(5V) motor  
