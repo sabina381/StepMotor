@@ -1,18 +1,19 @@
 // Switching Seq 
-// Step IN1 IN2 IN3 IN4
-//   1   0   0   0   1
-//   2   0   0   1   1
-//   3   0   0   1   0
-//   4   0   1   1   0
-//   5   0   1   0   0
-//   6   1   1   0   0
-//   7   1   0   0   0
-//   8   1   0   0   1
+// Step  | IN1 IN2 IN3 IN4
+// ----- | ----------------
+//   0   |  0   0   0   1
+//   1   |  0   0   1   1
+//   2   |  0   0   1   0
+//   3   |  0   1   1   0
+//   4   |  0   1   0   0
+//   5   |  1   1   0   0
+//   6   |  1   0   0   0
+//   7   |  1   0   0   1
 
 #include "Arduino.h"
 #include "StepMotor.h"
 
-StepMotor::StepMotor(int n_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4) {
+Stepper::Stepper(int n_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4) {
     this->step_signal = 0; // signal range (0-7)
     this->direction = 1; // init direction : clock wise
     this->n_steps = n_steps; // 4095 steps for 360 degree, 8 steps for 5.625 degree
@@ -30,7 +31,7 @@ StepMotor::StepMotor(int n_steps, int motor_pin_1, int motor_pin_2, int motor_pi
     pinMode(this->motor_pin_4, OUTPUT);
 }
 
-void StepMotor::step(int n_steps) {
+void Stepper::step(int n_steps) {
     this->direction = (n_steps >= 0) ? 1 : 0;
     n_steps = abs(n_steps);
 
@@ -50,7 +51,7 @@ void StepMotor::step(int n_steps) {
     }
 }
 
-void StepMotor::stepper() {
+void Stepper::stepper() {
     switch (this->step_signal) {
         case 0: // 0001
             this->pinSignal(LOW, LOW, LOW, HIGH);
@@ -90,27 +91,34 @@ void StepMotor::stepper() {
     this->controlSignal(); // set 
 }
 
-void StepMotor::pinSignal(int a, int b, int c, int d){
+void Stepper::pinSignal(int a, int b, int c, int d){
     digitalWrite(this->motor_pin_1, a);
     digitalWrite(this->motor_pin_2, b);
     digitalWrite(this->motor_pin_3, c);
     digitalWrite(this->motor_pin_4, d);
 }
 
-void StepMotor::controlSignal() {
+void Stepper::controlSignal() {
 
     // by using direction & step_signal attribute, 
     // control step_signal sequence.
-
+    // control step_signal by direction. 
+    
     if (this->direction == 0) {
         this->step_signal++;
     } else {
         this->step_signal--;
     }
+    // keep range 0-7
     if (this->step_signal > 7) {
         this->step_signal = 0;
     }
     if (this->step_signal < 0) {
         this->step_signal = 7;
     }
+}
+
+int Stepper::version(void)
+{
+  return 1;
 }
