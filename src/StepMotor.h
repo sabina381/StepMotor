@@ -20,7 +20,7 @@
 #ifndef StepMotor_h
 #define StepMotor_h
 
-#include <utility>  // for std::pair
+// #include <utility>  // for std::pair
 
 class Stepper {
 public:
@@ -62,7 +62,7 @@ public:
     void setPosition(int position);
     void move(int x_steps, int y_steps); // move to (x, y)
     void moveDiagonally(int x_steps, int y_steps);
-    std::pair<int, int> moveTogether(int x_steps, int y_steps);
+    void moveTogether(int x_steps, int y_steps);
 
 private:
     // define stepper motors
