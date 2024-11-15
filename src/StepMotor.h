@@ -20,59 +20,58 @@
 #ifndef StepMotor_h
 #define StepMotor_h
 
-// #include <utility>  // for std::pair
-
 class Stepper {
 public:
-    Stepper(int n_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4);
+    Stepper(int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4);
 
     void setSpeed(long speed);
-    void step(int n_steps);
+    void step(int direction, int n_steps); 
     int version(void);
 
-private:
     void stepper();               // return signal per position
     void controlSignal();          // control steps by direction and defined range of step_signal
     void pinSignal(int a, int b, int c, int d); // pin step signal 
-
-    // movement information
-    int step_signal;    // current step signal; range 0-7
-    int direction;      // 1: clockwise, 0: counterclockwise
-    int n_steps;        // remaining steps
 
     // motor pin numbers
     int motor_pin_1;
     int motor_pin_2;
     int motor_pin_3;
     int motor_pin_4;
+
+    // movement information
+    int step_signal;    // current step signal; range 0-7
+    int direction;      // 0: clockwise, 1: counterclockwise
+    int cumulated_steps; // 누적 값 
+
+};
+
+class MultiStepper {
+private:             
+    Stepper* stepper_x;
+    Stepper* stepper_y;
+
+public:
+    MultiStepper(Stepper* stepper_x, Stepper* stepper_y);
+
+    void setSpeed(long speed);
+    void step(int n_steps, int x_direction, int y_direction);
+    int version(void);
+
+    void moveDiagonalLURD(); // Left UP, Right Down 
+    void moveDiagonalRULD(); // Right Up, Left Down
+    void pinSignal(int a1, int b1, int c1, int d1, int a2, int b2, int c2, int d2);
+    void controlSignal();
+    
 };
 
 // drawing class  
 class TicTacToeArtist {
-public:
-    TicTacToeArtist(int board_width_mm, int board_height_mm, Stepper &stepper_x, Stepper &stepper_y, Stepper &stepper_z);
-
-    // drawing methods
-    void drawCircle();
-    void drawX();
-    void drawGameBoard();
-
-    // method for positions
-    void resetPosition();            // return to position (0,0)
-    void setPosition(int position);
-    void move(int x_steps, int y_steps); // move to (x, y)
-    void moveDiagonally(int x_steps, int y_steps);
-    void moveTogether(int x_steps, int y_steps);
-
 private:
     // define stepper motors
-    StepMotor &stepper_x;
-    StepMotor &stepper_y; 
-    StepMotor &stepper_z;
-
-    // control pen
-    void penUp();                    // lift pen to stop drawing
-    void penDown();                  // put down pen to start drawing
+    Stepper* stepper_x;
+    Stepper* stepper_y; 
+    Stepper* stepper_z;
+    MultiStepper multi_stepper;
 
     // define board size 
     int board_width;
@@ -90,6 +89,26 @@ private:
     float step_distance;            // distance per step (float type if more precision is needed)
     int steps_per_rotation;         // steps for one full rotation
     int circumference_distance;     // distance covered in one full rotation
+
+public:
+
+    TicTacToeArtist(int board_width_mm, int board_height_mm, Stepper* stepper_x, Stepper* stepper_y, Stepper* stepper_z);
+
+    // drawing methods
+    void drawCircle(int position);
+    void drawX(int position);
+    void drawGameBoard();
+
+    // control pen
+    void penUp();                    // lift pen to stop drawing
+    void penDown();                  // put down pen to start drawing
+
+    // method for positions
+    void resetPosition();            // return to position (0,0)
+    void setPosition(int position);
+    void move(int x_steps, int y_steps, int x_direction, int y_direction); // move to (x, y)
+    void moveDiagonally(int n_steps, int x_direction, int y_direction);
+    
 };
 
 #endif
