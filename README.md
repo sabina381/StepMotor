@@ -1,3 +1,15 @@
+## Structure
+```
+StepMotor 
+ - src 
+   - StepMotor.h
+   - Stepper.cpp
+   - MultiStepper.cpp
+ - example 
+ - keywords.txt
+ - library.properties
+```
+
 ## How to use
 1.	Clone the repository to your desktop.
 2.	Move the cloned folder to `/Documents/Arduino/libraries`.
