@@ -13,169 +13,167 @@
 #include "Arduino.h"
 #include "StepMotor.h"
 
-MultiStepper::MultiStepper(int x_steps, int y_steps, int motor_pin_x1, int motor_pin_x2, int motor_pin_x3, int motor_pin_x4, int motor_pin_y1, int motor_pin_y2, int motor_pin_y3, int motor_pin_y4)
-  {
-    this->x_step_signal = 0; // signal range (0-7)
-    this->y_step_signal = 0;
-    this->x_direction = 1; // init direction : clock wise
-    this->y_direction = 1;
-    this->x_steps = x_steps; // 4095 steps for 360 degree, 8 steps for 5.625 degree
-    this->y_steps = y_steps;
+MultiStepper::MultiStepper(Stepper* stepper_x, Stepper* stepper_y)
+    :stepper_x(stepper_x), stepper_y(stepper_y) {
+        
+    // setup pins : 근데 이거 이미 스테퍼에서 활성화해놔서 안해도 될지도 일단 둘게 
+    // pinMode(stepper_x->motor_pin_1, OUTPUT);
+    // pinMode(stepper_x->motor_pin_2, OUTPUT);
+    // pinMode(stepper_x->motor_pin_3, OUTPUT);
+    // pinMode(stepper_x->motor_pin_4, OUTPUT);
 
-    // define pin attributes
-    this->motor_pin_x1 = motor_pin_x1;
-    this->motor_pin_x2 = motor_pin_x2;
-    this->motor_pin_x3 = motor_pin_x3;
-    this->motor_pin_x4 = motor_pin_x4;
+    // pinMode(stepper_y->motor_pin_1, OUTPUT);
+    // pinMode(stepper_y->motor_pin_2, OUTPUT);
+    // pinMode(stepper_y->motor_pin_3, OUTPUT);
+    // pinMode(stepper_y->motor_pin_4, OUTPUT);
 
-    this->motor_pin_y1 = motor_pin_y1;
-    this->motor_pin_y2 = motor_pin_y2;
-    this->motor_pin_y3 = motor_pin_y3;
-    this->motor_pin_y4 = motor_pin_y4;
-    
-    // setup pins 
-    pinMode(this->motor_pin_x1, OUTPUT);
-    pinMode(this->motor_pin_x2, OUTPUT);
-    pinMode(this->motor_pin_x3, OUTPUT);
-    pinMode(this->motor_pin_x4, OUTPUT);
-
-    pinMode(this->motor_pin_y1, OUTPUT);
-    pinMode(this->motor_pin_y2, OUTPUT);
-    pinMode(this->motor_pin_y3, OUTPUT);
-    pinMode(this->motor_pin_y4, OUTPUT);
 }
 
-void MultiStepper::step(int x_steps, int y_steps) {
-    this->x_direction = (x_steps >= 0) ? 1 : 0;
-    this->y_direction = (y_steps >= 0) ? 1 : 0;
-    x_steps = abs(x_steps);
-    y_steps = abs(y_steps);
+void MultiStepper::step(int n_steps, int x_direction, int y_direction) {
+    // x, y direction
+    stepper_x->direction = x_direction;
+    stepper_y->direction = y_direction;
+
+    // cumulate steps 
+    stepper_x->cumulated_steps += n_steps * x_direction;
+    stepper_y->cumulated_steps += n_steps * y_direction;
+
+    // total steps 
+    n_steps = abs(n_steps);
+
+    // initialize each step signal 
+    // stepper_x->step_signal = 0;
+    // stepper_y->step_signal = 0;
 
     unsigned long previous_time;
     unsigned long current_millis;
     long time;
 
-    if (this->x_direction == this->y_direction) {
-      while (x_steps > 0 and y_steps > 0) {
+    if (stepper_x->direction == stepper_y->direction) { 
+
+        // Left Up, Right Down 
+
+      while (n_steps > 0) {
         current_millis = micros();
         if (current_millis - previous_time >= 800) {
-
-            this->multi_stepper_CW(); // move single step 
+            this->moveDiagonalLURD(); // move single step 
             time += micros() - previous_time;
             previous_time = micros();
-            x_steps--;
-            y_steps--;
+            n_steps--;
         }
       }
-    } else{
-      while (x_steps > 0 and y_steps > 0) {
+    } else { 
+
+        // Right Up, Left Down 
+
+      while (n_steps > 0) {
         current_millis = micros();
         if (current_millis - previous_time >= 800) {
-            this->multi_stepper_CCW(); // move single step 
+            this->moveDiagonalRULD(); // move single step 
             time += micros() - previous_time;
             previous_time = micros();
-            x_steps--;
-            y_steps--;
+            n_steps--;
         }
       }
     }
 }
 
-void MultiStepper::multi_stepper_CW() {
-    switch (this->x_step_signal) {
-        case 0: // 0001
+void MultiStepper::moveDiagonalLURD() {
+    switch (stepper_x->step_signal) {
+        case 0: // 0001 0001
             this->pinSignal(LOW, LOW, LOW, HIGH, LOW, LOW, LOW, HIGH);
             break;
 
-        case 1: // 0011
+        case 1: // 0011 0011
             this->pinSignal(LOW, LOW, HIGH, HIGH, LOW, LOW, HIGH, HIGH);
             break;
 
-        case 2: // 0010
+        case 2: // 0010 0010
             this->pinSignal(LOW, LOW, HIGH, LOW, LOW, LOW, HIGH, LOW);
             break;
 
-        case 3: // 0110
+        case 3: // 0110 0110
             this->pinSignal(LOW, HIGH, HIGH, LOW, LOW, HIGH, HIGH, LOW);
             break;
 
-        case 4: // 0100
+        case 4: // 0100 0100
             this->pinSignal(LOW, HIGH, LOW, LOW, LOW, HIGH, LOW, LOW);
             break;
 
-        case 5: // 1100
+        case 5: // 1100 1100
             this->pinSignal(HIGH, HIGH, LOW, LOW, HIGH, HIGH, LOW, LOW);
             break;
 
-        case 6: // 1000
+        case 6: // 1000 1000
             this->pinSignal(HIGH, LOW, LOW, LOW, HIGH, LOW, LOW, LOW);
             break;
 
-        case 7: // 1001
+        case 7: // 1001 1001
             this->pinSignal(HIGH, LOW, LOW, HIGH, HIGH, LOW, LOW, HIGH);
             break;
 
         default:
-            digitalWrite(this->motor_pin_x1, LOW);
-            digitalWrite(this->motor_pin_y1, LOW);
+            digitalWrite(stepper_x->motor_pin_1, LOW);
+            digitalWrite(stepper_y->motor_pin_1, LOW);
     }
     this->controlSignal(); // set 
 }
 
 
 
-void MultiStepper::multi_stepper_CCW() {
-    switch (this->x_step_signal) { // x signal 기준으로
-        case 0: // 0001
+void MultiStepper::moveDiagonalRULD() {
+    switch (stepper_x->step_signal) { // x signal 기준으로
+        case 0: // 0001 1001
             this->pinSignal(LOW, LOW, LOW, HIGH, HIGH, LOW, LOW, HIGH);
             break;
 
-        case 1: // 0011
+        case 1: // 0011 1000
             this->pinSignal(LOW, LOW, HIGH, HIGH, HIGH, LOW, LOW, LOW);
             break;
 
-        case 2: // 0010
+        case 2: // 0010 1100
             this->pinSignal(LOW, LOW, HIGH, LOW, HIGH, HIGH, LOW, LOW);
             break;
 
-        case 3: // 0110
+        case 3: // 0110 0100
             this->pinSignal(LOW, HIGH, HIGH, LOW, LOW, HIGH, LOW, LOW);
             break;
 
-        case 4: // 0100
+        case 4: // 0100 0110
             this->pinSignal(LOW, HIGH, LOW, LOW, LOW, HIGH, HIGH, LOW);
             break;
 
-        case 5: // 1100
+        case 5: // 1100 0010
             this->pinSignal(HIGH, HIGH, LOW, LOW, LOW, LOW, HIGH, LOW);
             break;
 
-        case 6: // 1000
+        case 6: // 1000 0011
             this->pinSignal(HIGH, LOW, LOW, LOW, LOW, LOW, HIGH, HIGH);
             break;
 
-        case 7: // 1001
+        case 7: // 1001 0001
             this->pinSignal(HIGH, LOW, LOW, HIGH, LOW, LOW, LOW, HIGH);
             break;
 
         default:
-            digitalWrite(this->motor_pin_x1, LOW);
-            digitalWrite(this->motor_pin_y1, LOW);
+            digitalWrite(stepper_x->motor_pin_1, LOW);
+            digitalWrite(stepper_y->motor_pin_1, LOW);
     }
     this->controlSignal(); // set 
 }
 
 
 void MultiStepper::pinSignal(int a1, int b1, int c1, int d1, int a2, int b2, int c2, int d2){
-    digitalWrite(this->motor_pin_x1, a1);
-    digitalWrite(this->motor_pin_x2, b1);
-    digitalWrite(this->motor_pin_x3, c1);
-    digitalWrite(this->motor_pin_x4, d1);
-
-    digitalWrite(this->motor_pin_y1, a2);
-    digitalWrite(this->motor_pin_y2, b2);
-    digitalWrite(this->motor_pin_y3, c2);
-    digitalWrite(this->motor_pin_y4, d2);
+    // pin signal on stepper_x
+    digitalWrite(stepper_x->motor_pin_1, a1);
+    digitalWrite(stepper_x->motor_pin_2, b1);
+    digitalWrite(stepper_x->motor_pin_3, c1);
+    digitalWrite(stepper_x->motor_pin_4, d1);
+    // pin signal on stepper_y
+    digitalWrite(stepper_y->motor_pin_1, a2);
+    digitalWrite(stepper_y->motor_pin_2, b2);
+    digitalWrite(stepper_y->motor_pin_3, c2);
+    digitalWrite(stepper_y->motor_pin_4, d2);
 }
 
 void MultiStepper::controlSignal() {
@@ -185,31 +183,31 @@ void MultiStepper::controlSignal() {
     // control step_signal by direction. 
     
     // x
-    if (this->x_direction == 0) {
-        this->x_step_signal++;
+    if (stepper_x->direction == 1) {
+        stepper_x->step_signal++;
     } else {
-        this->x_step_signal--;
+        stepper_x->step_signal--;
     }
     // keep range 0-7
-    if (this->x_step_signal > 7) {
-        this->x_step_signal = 0;
+    if (stepper_x->step_signal > 7) {
+        stepper_x->step_signal = 0;
     }
-    if (this->x_step_signal < 0) {
-        this->x_step_signal = 7;
+    if (stepper_x->step_signal < 0) {
+        stepper_x->step_signal = 7;
     }
 
     // y
-    if (this->y_direction == 0) {
-        this->y_step_signal++;
+    if (stepper_y->direction == 1) {
+        stepper_y->step_signal++;
     } else {
-        this->y_step_signal--;
+        stepper_y->step_signal--;
     }
     // keep range 0-7
-    if (this->y_step_signal > 7) {
-        this->y_step_signal = 0;
+    if (stepper_y->step_signal > 7) {
+        stepper_y->step_signal = 0;
     }
-    if (this->y_step_signal < 0) {
-        this->y_step_signal = 7;
+    if (stepper_y->step_signal < 0) {
+        stepper_y->step_signal = 7;
     }
 }
 

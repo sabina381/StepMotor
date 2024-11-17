@@ -10,13 +10,15 @@
 //   6   |  1   0   0   0
 //   7   |  1   0   0   1
 
+// 4095 steps for 360 degree, 8 steps for 5.625 degree
+
 #include "Arduino.h"
 #include "StepMotor.h"
 
-Stepper::Stepper(int n_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4) {
+Stepper::Stepper(int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4) {
     this->step_signal = 0; // signal range (0-7)
-    this->direction = 1; // init direction : clock wise
-    this->n_steps = n_steps; // 4095 steps for 360 degree, 8 steps for 5.625 degree
+    this->direction = 0; // init direction : clock wise
+    this->cumulated_steps = 0; // reset the step values 
     
     // define pin attributes
     this->motor_pin_1 = motor_pin_1;
@@ -31,9 +33,10 @@ Stepper::Stepper(int n_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3,
     pinMode(this->motor_pin_4, OUTPUT);
 }
 
-void Stepper::step(int n_steps) {
-    this->direction = (n_steps >= 0) ? 1 : 0;
-    n_steps = abs(n_steps);
+void Stepper::step(int direction, int n_steps) { 
+    this->cumulated_steps += direction * n_steps; // 누적 스텝 추가 
+    // this->step_signal = 0; // 초기화, 듀얼로 움직이는 것 때문에 초기화가 필요하다. 
+    n_steps = abs(n_steps); // 혹시 음수 값 넣어도 양수로 전환, 이후에 에러나게 수정하자. 
 
     unsigned long previous_time;
     unsigned long current_millis;
@@ -91,7 +94,7 @@ void Stepper::stepper() {
     this->controlSignal(); // set 
 }
 
-void Stepper::pinSignal(int a, int b, int c, int d){
+void Stepper::pinSignal(int a, int b, int c, int d) {
     digitalWrite(this->motor_pin_1, a);
     digitalWrite(this->motor_pin_2, b);
     digitalWrite(this->motor_pin_3, c);
@@ -104,7 +107,7 @@ void Stepper::controlSignal() {
     // control step_signal sequence.
     // control step_signal by direction. 
     
-    if (this->direction == 0) {
+    if (this->direction == 1) {
         this->step_signal++;
     } else {
         this->step_signal--;
