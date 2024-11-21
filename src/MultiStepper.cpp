@@ -29,21 +29,18 @@ MultiStepper::MultiStepper(Stepper* stepper_x, Stepper* stepper_y)
 
 }
 
+void MultiStepper::setSpeed(long speed) {
+    stepper_x->setSpeed(speed);
+    stepper_y->setSpeed(speed);
+}
+
 void MultiStepper::step(int n_steps, int x_direction, int y_direction) {
     // x, y direction
     stepper_x->direction = x_direction;
     stepper_y->direction = y_direction;
 
-    // cumulate steps 
-    stepper_x->cumulated_steps += n_steps * x_direction;
-    stepper_y->cumulated_steps += n_steps * y_direction;
-
     // total steps 
     n_steps = abs(n_steps);
-
-    // initialize each step signal 
-    // stepper_x->step_signal = 0;
-    // stepper_y->step_signal = 0;
 
     unsigned long previous_time;
     unsigned long current_millis;
@@ -55,7 +52,7 @@ void MultiStepper::step(int n_steps, int x_direction, int y_direction) {
 
       while (n_steps > 0) {
         current_millis = micros();
-        if (current_millis - previous_time >= 800) {
+        if (current_millis - previous_time >= stepper_x->step_delay) {
             this->moveDiagonalLURD(); // move single step 
             time += micros() - previous_time;
             previous_time = micros();
@@ -68,7 +65,7 @@ void MultiStepper::step(int n_steps, int x_direction, int y_direction) {
 
       while (n_steps > 0) {
         current_millis = micros();
-        if (current_millis - previous_time >= 800) {
+        if (current_millis - previous_time >= stepper_y->step_delay) {
             this->moveDiagonalRULD(); // move single step 
             time += micros() - previous_time;
             previous_time = micros();
@@ -184,9 +181,9 @@ void MultiStepper::controlSignal() {
     
     // x
     if (stepper_x->direction == 1) {
-        stepper_x->step_signal++;
-    } else {
         stepper_x->step_signal--;
+    } else {
+        stepper_x->step_signal++;
     }
     // keep range 0-7
     if (stepper_x->step_signal > 7) {
@@ -198,9 +195,9 @@ void MultiStepper::controlSignal() {
 
     // y
     if (stepper_y->direction == 1) {
-        stepper_y->step_signal++;
-    } else {
         stepper_y->step_signal--;
+    } else {
+        stepper_y->step_signal++;
     }
     // keep range 0-7
     if (stepper_y->step_signal > 7) {

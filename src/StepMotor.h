@@ -25,12 +25,13 @@ public:
     Stepper(int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4);
 
     void setSpeed(long speed);
-    void step(int direction, int n_steps); 
+    void step(int n_steps, int direction); 
     int version(void);
 
     void stepper();               // return signal per position
     void controlSignal();          // control steps by direction and defined range of step_signal
     void pinSignal(int a, int b, int c, int d); // pin step signal 
+    void reset();
 
     // motor pin numbers
     int motor_pin_1;
@@ -41,7 +42,10 @@ public:
     // movement information
     int step_signal;    // current step signal; range 0-7
     int direction;      // 0: clockwise, 1: counterclockwise
+
     int cumulated_steps; // 누적 값 
+    int number_of_steps = 4096; // 한 바퀴를 돌 때 
+    long step_delay = 800L; // 속도 조절을 위한 값 
 
 };
 
@@ -74,25 +78,23 @@ private:
     MultiStepper multi_stepper;
 
     // define board size 
-    int board_width;
-    int board_height;
+    int board_width_grid;
+    int board_height_grid;
 
-    int cell_width;
-    int cell_height;
-
-    int max_symbol_size;
-    int cumulated_x_steps;
-    int cumulated_y_steps;
-    int cumulated_z_steps;
+    // cal cell size
+    int cell_width_grid;
+    int cell_height_grid;
+    
+    // X 변의 길이, 팔각형 변의 길이 
+    int x_grid_line;
+    int circle_grid_line;
 
     // stepper settings
-    float step_distance;            // distance per step (float type if more precision is needed)
-    int steps_per_rotation;         // steps for one full rotation
-    int circumference_distance;     // distance covered in one full rotation
+    int steps_per_grid = 423; // 1모눈에 423 steps
 
 public:
 
-    TicTacToeArtist(int board_width_mm, int board_height_mm, Stepper* stepper_x, Stepper* stepper_y, Stepper* stepper_z);
+    TicTacToeArtist(int board_width_grid, int board_height_grid, Stepper* stepper_x, Stepper* stepper_y, Stepper* stepper_z);
 
     // drawing methods
     void drawCircle(int position);
@@ -106,8 +108,10 @@ public:
     // method for positions
     void resetPosition();            // return to position (0,0)
     void setPosition(int position);
-    void move(int x_steps, int y_steps, int x_direction, int y_direction); // move to (x, y)
-    void moveDiagonally(int n_steps, int x_direction, int y_direction);
+    void move(int x_grids, int y_grids, int x_direction, int y_direction); // move to (x, y)
+    void moveDiagonally(int n_grids, int x_direction, int y_direction);
+    void moveX(int n_grids, int direction);
+    void moveY(int n_grids, int direction);
     
 };
 

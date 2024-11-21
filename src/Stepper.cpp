@@ -17,8 +17,9 @@
 
 Stepper::Stepper(int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4) {
     this->step_signal = 0; // signal range (0-7)
-    this->direction = 0; // init direction : clock wise
+    this->direction = 1; // init direction : clock wise
     this->cumulated_steps = 0; // reset the step values 
+    this->step_delay = 800; // init 
     
     // define pin attributes
     this->motor_pin_1 = motor_pin_1;
@@ -32,8 +33,14 @@ Stepper::Stepper(int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pi
     pinMode(this->motor_pin_3, OUTPUT);
     pinMode(this->motor_pin_4, OUTPUT);
 }
+void Stepper::setSpeed(long speed)
+{
+//   this->step_delay = 60L * 1000L * 1000L / this->number_of_steps / speed;
+    this->step_delay = speed;
+}
 
-void Stepper::step(int direction, int n_steps) { 
+void Stepper::step(int n_steps, int direction) { 
+    this->direction = direction; // direction 수정 
     this->cumulated_steps += direction * n_steps; // 누적 스텝 추가 
     // this->step_signal = 0; // 초기화, 듀얼로 움직이는 것 때문에 초기화가 필요하다. 
     n_steps = abs(n_steps); // 혹시 음수 값 넣어도 양수로 전환, 이후에 에러나게 수정하자. 
@@ -44,7 +51,7 @@ void Stepper::step(int direction, int n_steps) {
 
     while (n_steps > 0) {
         current_millis = micros();
-        if (current_millis - previous_time >= 800) {
+        if (current_millis - previous_time >= this->step_delay) {
 
             this->stepper(); // move single step 
             time += micros() - previous_time;
@@ -55,6 +62,7 @@ void Stepper::step(int direction, int n_steps) {
 }
 
 void Stepper::stepper() {
+    Serial.println(this->step_signal);
     switch (this->step_signal) {
         case 0: // 0001
             this->pinSignal(LOW, LOW, LOW, HIGH);
@@ -108,9 +116,9 @@ void Stepper::controlSignal() {
     // control step_signal by direction. 
     
     if (this->direction == 1) {
-        this->step_signal++;
-    } else {
         this->step_signal--;
+    } else {
+        this->step_signal++;
     }
     // keep range 0-7
     if (this->step_signal > 7) {
@@ -124,4 +132,13 @@ void Stepper::controlSignal() {
 int Stepper::version(void)
 {
   return 1;
+}
+
+void Stepper::reset() {
+    int n_steps = abs(this->cumulated_steps);
+    int direction = (stepper_x->cumulated_steps >= 0) ? -1 : 1; // 방향을 반대로 바꿔줘야 한다. 
+
+    if (n_steps != 0) { this->step(n_steps, direction); }
+
+    this->cumulated_steps = 0; // 값을 초기화한다. 
 }
