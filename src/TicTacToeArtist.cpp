@@ -9,15 +9,16 @@ TicTacToeArtist::TicTacToeArtist(int board_width_grid, int board_height_grid, St
     this->cell_height_grid = round(this->board_height_grid / 3);  // 사실 7
 
     // size limit
-    this->x_grid_line = min(this->cell_height_grid, this->cell_width_grid) - 2; // 사실 5다. 
+    this->x_grid_line = 5; // min(this->cell_height_grid, this->cell_width_grid) - 2; // 사실 5다. 
     this->circle_grid_line = round(min(this->cell_height_grid, this->cell_width_grid) / 3); // 사실 2다. 
 }
 
 // draw O, X, game board
 void TicTacToeArtist::drawCircle(int position) {
     // 모눈력 -> step으로 환산 
-    int side_step = this->circle_grid_line * this->steps_per_grid; 
-    int diag_step = round(this->circle_grid_line / sqrt(2)) * this->steps_per_grid; // 반올림되는거 주의 
+    int side_step = this->circle_grid_line
+    ; 
+    int diag_step = round(this->circle_grid_line / sqrt(2)); // 반올림되는거 주의 
 
     // 초기 위치 잡기
     int init_x_step = round(this->steps_per_grid * 2.5);
@@ -41,8 +42,6 @@ void TicTacToeArtist::drawCircle(int position) {
 }
 
 void TicTacToeArtist::drawX(int position) { 
-    // X의 크기를 모눈력에서 스텝으로 환산 : 5 모눈력 
-    int n_step = this->steps_per_grid * this->x_grid_line; 
 
     // 위치 잡기
     this->setPosition(position);
@@ -50,11 +49,11 @@ void TicTacToeArtist::drawX(int position) {
 
     // 그리기
     this->penDown();
-    this->moveDiagonally(n_step, 1, 1);
+    this->moveDiagonally(this->x_grid_line, 1, 1);
     this->penUp();
-    this->moveX(n_step, -1);
+    this->moveX(this->x_grid_line, -1);
     this->penDown();
-    this->moveDiagonally(n_step, 1, -1);
+    this->moveDiagonally(this->x_grid_line, 1, -1);
     this->penUp();
 
     // 원위치로
@@ -73,14 +72,16 @@ void TicTacToeArtist::drawGameBoard() {
     this->moveX(this->board_width_grid, -1);
     this->penUp();
 
-    this->move(this->cell_width_grid, this->cell_height_grid, 1, 1);
+    // this->move(this->cell_width_grid, this->cell_height_grid, 1, 1);
+    this->moveX(this->cell_width_grid, 1);
+    this->moveY(this->cell_height_grid, 1);
     this->penDown();
     this->moveY(this->board_height_grid, -1);
     this->penUp();
 
     this->moveX(this->cell_width_grid, 1);
     this->penDown();
-    this->moveX(this->board_height_grid, 1);;
+    this->moveY(this->board_height_grid, 1);;
     this->penUp();
 
     // 원위치로
@@ -113,7 +114,7 @@ void TicTacToeArtist::moveDiagonally(int n_grids, int x_direction, int y_directi
 }
 
 void TicTacToeArtist::moveX(int n_grids, int direction) {
-    int n_grids = abs(n_grids); 
+    n_grids = abs(n_grids); 
 
     // 모눈력 -> 스텝으로 변환 
     int n_steps = n_grids * this->steps_per_grid;
@@ -123,7 +124,7 @@ void TicTacToeArtist::moveX(int n_grids, int direction) {
 }
 
 void TicTacToeArtist::moveY(int n_grids, int direction) {
-    int n_grids = abs(n_grids); 
+    n_grids = abs(n_grids); 
 
     // 모눈력 -> 스텝으로 변환 
     int n_steps = n_grids * this->steps_per_grid;
@@ -185,9 +186,9 @@ void TicTacToeArtist::setPosition(int position) {
 // 방향과 정도 수정 
 
 void TicTacToeArtist::penUp() {
-    stepper_z->step(this->step_distance*5, -1);
+    stepper_z->step(this->steps_per_grid, -1);
 }
 
 void TicTacToeArtist::penDown() {
-    stepper_z->step(this->step_distance*5, 1);
+    stepper_z->step(this->steps_per_grid, 1);
 }

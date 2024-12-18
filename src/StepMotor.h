@@ -91,6 +91,7 @@ private:
 
     // stepper settings
     int steps_per_grid = 423; // 1모눈에 423 steps
+    
 
 public:
 

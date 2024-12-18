@@ -45,7 +45,7 @@ void Stepper::step(int n_steps, int direction) {
     // this->step_signal = 0; // 초기화, 듀얼로 움직이는 것 때문에 초기화가 필요하다. 
     n_steps = abs(n_steps); // 혹시 음수 값 넣어도 양수로 전환, 이후에 에러나게 수정하자. 
 
-    unsigned long previous_time;
+    unsigned long previous_time; //  = micros();
     unsigned long current_millis;
     long time;
 
@@ -62,7 +62,6 @@ void Stepper::step(int n_steps, int direction) {
 }
 
 void Stepper::stepper() {
-    Serial.println(this->step_signal);
     switch (this->step_signal) {
         case 0: // 0001
             this->pinSignal(LOW, LOW, LOW, HIGH);
@@ -136,7 +135,7 @@ int Stepper::version(void)
 
 void Stepper::reset() {
     int n_steps = abs(this->cumulated_steps);
-    int direction = (stepper_x->cumulated_steps >= 0) ? -1 : 1; // 방향을 반대로 바꿔줘야 한다. 
+    int direction = (this->cumulated_steps >= 0) ? -1 : 1; // 방향을 반대로 바꿔줘야 한다. 
 
     if (n_steps != 0) { this->step(n_steps, direction); }
 

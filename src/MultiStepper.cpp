@@ -14,20 +14,7 @@
 #include "StepMotor.h"
 
 MultiStepper::MultiStepper(Stepper* stepper_x, Stepper* stepper_y)
-    :stepper_x(stepper_x), stepper_y(stepper_y) {
-        
-    // setup pins : 근데 이거 이미 스테퍼에서 활성화해놔서 안해도 될지도 일단 둘게 
-    // pinMode(stepper_x->motor_pin_1, OUTPUT);
-    // pinMode(stepper_x->motor_pin_2, OUTPUT);
-    // pinMode(stepper_x->motor_pin_3, OUTPUT);
-    // pinMode(stepper_x->motor_pin_4, OUTPUT);
-
-    // pinMode(stepper_y->motor_pin_1, OUTPUT);
-    // pinMode(stepper_y->motor_pin_2, OUTPUT);
-    // pinMode(stepper_y->motor_pin_3, OUTPUT);
-    // pinMode(stepper_y->motor_pin_4, OUTPUT);
-
-}
+    :stepper_x(stepper_x), stepper_y(stepper_y) { }
 
 void MultiStepper::setSpeed(long speed) {
     stepper_x->setSpeed(speed);
@@ -42,7 +29,11 @@ void MultiStepper::step(int n_steps, int x_direction, int y_direction) {
     // total steps 
     n_steps = abs(n_steps);
 
-    unsigned long previous_time;
+    // reset을 위해 누적합에 추가 
+    stepper_x->cumulated_steps = x_direction * n_steps;
+    stepper_y->cumulated_steps = y_direction * n_steps;
+
+    unsigned long previous_time; //  = micros()
     unsigned long current_millis;
     long time;
 
@@ -51,6 +42,7 @@ void MultiStepper::step(int n_steps, int x_direction, int y_direction) {
         // Left Up, Right Down 
 
       while (n_steps > 0) {
+        
         current_millis = micros();
         if (current_millis - previous_time >= stepper_x->step_delay) {
             this->moveDiagonalLURD(); // move single step 
@@ -79,34 +71,50 @@ void MultiStepper::moveDiagonalLURD() {
     switch (stepper_x->step_signal) {
         case 0: // 0001 0001
             this->pinSignal(LOW, LOW, LOW, HIGH, LOW, LOW, LOW, HIGH);
+            stepper_x->step_signal = 0;
+            stepper_y->step_signal = 0;
             break;
 
         case 1: // 0011 0011
             this->pinSignal(LOW, LOW, HIGH, HIGH, LOW, LOW, HIGH, HIGH);
+            stepper_x->step_signal = 1;
+            stepper_y->step_signal = 1;
             break;
 
         case 2: // 0010 0010
             this->pinSignal(LOW, LOW, HIGH, LOW, LOW, LOW, HIGH, LOW);
+            stepper_x->step_signal = 2;
+            stepper_y->step_signal = 2;
             break;
 
         case 3: // 0110 0110
             this->pinSignal(LOW, HIGH, HIGH, LOW, LOW, HIGH, HIGH, LOW);
+            stepper_x->step_signal = 3;
+            stepper_y->step_signal = 3;
             break;
 
         case 4: // 0100 0100
             this->pinSignal(LOW, HIGH, LOW, LOW, LOW, HIGH, LOW, LOW);
+            stepper_x->step_signal = 4;
+            stepper_y->step_signal = 4;
             break;
 
         case 5: // 1100 1100
             this->pinSignal(HIGH, HIGH, LOW, LOW, HIGH, HIGH, LOW, LOW);
+            stepper_x->step_signal = 5;
+            stepper_y->step_signal = 5;
             break;
 
         case 6: // 1000 1000
             this->pinSignal(HIGH, LOW, LOW, LOW, HIGH, LOW, LOW, LOW);
+            stepper_x->step_signal = 6;
+            stepper_y->step_signal = 6;
             break;
 
         case 7: // 1001 1001
             this->pinSignal(HIGH, LOW, LOW, HIGH, HIGH, LOW, LOW, HIGH);
+            stepper_x->step_signal = 7;
+            stepper_y->step_signal = 7;
             break;
 
         default:
@@ -122,34 +130,50 @@ void MultiStepper::moveDiagonalRULD() {
     switch (stepper_x->step_signal) { // x signal 기준으로
         case 0: // 0001 1001
             this->pinSignal(LOW, LOW, LOW, HIGH, HIGH, LOW, LOW, HIGH);
+            stepper_x->step_signal = 0;
+            stepper_y->step_signal = 7;
             break;
 
         case 1: // 0011 1000
             this->pinSignal(LOW, LOW, HIGH, HIGH, HIGH, LOW, LOW, LOW);
+            stepper_x->step_signal = 1;
+            stepper_y->step_signal = 6;
             break;
 
         case 2: // 0010 1100
             this->pinSignal(LOW, LOW, HIGH, LOW, HIGH, HIGH, LOW, LOW);
+            stepper_x->step_signal = 2;
+            stepper_y->step_signal = 5;
             break;
 
         case 3: // 0110 0100
             this->pinSignal(LOW, HIGH, HIGH, LOW, LOW, HIGH, LOW, LOW);
+            stepper_x->step_signal = 3;
+            stepper_y->step_signal = 4;
             break;
 
         case 4: // 0100 0110
             this->pinSignal(LOW, HIGH, LOW, LOW, LOW, HIGH, HIGH, LOW);
+            stepper_x->step_signal = 4;
+            stepper_y->step_signal = 3;
             break;
 
         case 5: // 1100 0010
             this->pinSignal(HIGH, HIGH, LOW, LOW, LOW, LOW, HIGH, LOW);
+            stepper_x->step_signal = 5;
+            stepper_y->step_signal = 2;
             break;
 
         case 6: // 1000 0011
             this->pinSignal(HIGH, LOW, LOW, LOW, LOW, LOW, HIGH, HIGH);
+            stepper_x->step_signal = 6;
+            stepper_y->step_signal = 1;
             break;
 
         case 7: // 1001 0001
             this->pinSignal(HIGH, LOW, LOW, HIGH, LOW, LOW, LOW, HIGH);
+            stepper_x->step_signal = 7;
+            stepper_y->step_signal = 0;
             break;
 
         default:
