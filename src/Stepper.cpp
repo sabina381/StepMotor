@@ -18,7 +18,6 @@
 Stepper::Stepper(int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4) {
     this->step_signal = 0; // signal range (0-7)
     this->direction = 1; // init direction : clock wise
-    this->cumulated_steps = 0; // reset the step values 
     this->step_delay = 800; // init 
     
     // define pin attributes
@@ -41,7 +40,6 @@ void Stepper::setSpeed(long speed)
 
 void Stepper::step(int n_steps, int direction) { 
     this->direction = direction; // direction 수정 
-    this->cumulated_steps += direction * n_steps; // 누적 스텝 추가 
     // this->step_signal = 0; // 초기화, 듀얼로 움직이는 것 때문에 초기화가 필요하다. 
     n_steps = abs(n_steps); // 혹시 음수 값 넣어도 양수로 전환, 이후에 에러나게 수정하자. 
 
@@ -57,6 +55,7 @@ void Stepper::step(int n_steps, int direction) {
             time += micros() - previous_time;
             previous_time = micros();
             n_steps--;
+            delay(1);
         }
     }
 }
@@ -133,11 +132,3 @@ int Stepper::version(void)
   return 1;
 }
 
-void Stepper::reset() {
-    int n_steps = abs(this->cumulated_steps);
-    int direction = (this->cumulated_steps >= 0) ? -1 : 1; // 방향을 반대로 바꿔줘야 한다. 
-
-    if (n_steps != 0) { this->step(n_steps, direction); }
-
-    this->cumulated_steps = 0; // 값을 초기화한다. 
-}

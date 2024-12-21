@@ -29,10 +29,6 @@ void MultiStepper::step(int n_steps, int x_direction, int y_direction) {
     // total steps 
     n_steps = abs(n_steps);
 
-    // reset을 위해 누적합에 추가 
-    stepper_x->cumulated_steps = x_direction * n_steps;
-    stepper_y->cumulated_steps = y_direction * n_steps;
-
     unsigned long previous_time; //  = micros()
     unsigned long current_millis;
     long time;
@@ -49,6 +45,7 @@ void MultiStepper::step(int n_steps, int x_direction, int y_direction) {
             time += micros() - previous_time;
             previous_time = micros();
             n_steps--;
+            delay(1);
         }
       }
     } else { 
@@ -62,6 +59,7 @@ void MultiStepper::step(int n_steps, int x_direction, int y_direction) {
             time += micros() - previous_time;
             previous_time = micros();
             n_steps--;
+            delay(1);
         }
       }
     }
