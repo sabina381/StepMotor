@@ -43,7 +43,6 @@ public:
     int step_signal;    // current step signal; range 0-7
     int direction;      // 0: clockwise, 1: counterclockwise
 
-    int cumulated_steps; // 누적 값 
     int number_of_steps = 4096; // 한 바퀴를 돌 때 
     long step_delay = 800L; // 속도 조절을 위한 값 
 
@@ -97,6 +96,9 @@ public:
 
     TicTacToeArtist(int board_width_grid, int board_height_grid, Stepper* stepper_x, Stepper* stepper_y, Stepper* stepper_z);
 
+    int cumulated_step_x;
+    int cumulated_step_y;
+    
     // drawing methods
     void drawCircle(int position);
     void drawX(int position);
